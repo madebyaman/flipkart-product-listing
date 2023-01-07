@@ -3,6 +3,8 @@ import { Product } from './Product';
 import { products } from './products';
 import { capitalizedWord } from './utils/capitalized';
 import { classNames } from './utils/classNames';
+import { useQuery } from './utils/useQuery';
+import { Link, useNavigate } from 'react-router-dom';
 
 function createLink({
   sort,
@@ -24,8 +26,7 @@ function createLink({
   }
   if (size) urlParams.set('size', size);
   if (gender) urlParams.set('gender', gender);
-  const currentUrl = window.location.origin;
-  const newUrl = currentUrl + '?' + urlParams.toString();
+  const newUrl = '?' + urlParams.toString();
   return newUrl;
 }
 
@@ -46,12 +47,11 @@ function sortedProducts(sort: string) {
 }
 
 function App() {
-  const queryString = window.location.search;
-  const urlParams = new URLSearchParams(queryString);
-  const sortOrder = urlParams.get('sort') || 'asc';
-  const selectedBrands = urlParams.get('brand');
-  const selectedSize = urlParams.get('size');
-  const selectedGenders = urlParams.get('gender');
+  const query = useQuery();
+  const sortOrder = query.get('sort') || 'asc';
+  const selectedBrands = query.get('brand');
+  const selectedSize = query.get('size');
+  const selectedGenders = query.get('gender');
 
   return (
     <div>
@@ -64,18 +64,18 @@ function App() {
         <h1 className="text-2xl leading-tight font-medium mb-2">Products</h1>
         <div className="flex text-sm gap-2 mb-2">
           <p className="inline font-semibold">Sort By</p>
-          <a
+          <Link
             className={sortOrder === 'asc' ? sortActiveLink : ''}
-            href={createLink({ sort: 'asc' })}
+            to={createLink({ sort: 'asc' })}
           >
             Price - Low to High
-          </a>
-          <a
-            href={createLink({ sort: 'desc' })}
+          </Link>
+          <Link
+            to={createLink({ sort: 'desc' })}
             className={sortOrder === 'desc' ? sortActiveLink : ''}
           >
             Price - High to Low
-          </a>
+          </Link>
         </div>
       </div>
       <div className="grid grid-cols-3 gap-x-3 gap-y-6">
@@ -117,6 +117,7 @@ function FilterItem({
   selected: string | null;
 }) {
   const [open, setOpen] = useState(true);
+  const navigate = useNavigate();
   // From selected, gather which all options are checked
   let selectedOptions: string[] = [];
   if (selected) {
@@ -148,7 +149,7 @@ function FilterItem({
       link = createLink({ gender: newSelectedOptions.join(':') });
     }
     // open the link
-    window.history.pushState({}, '', link);
+    link && navigate(link);
   }
 
   function isChecked(option: string): boolean {
