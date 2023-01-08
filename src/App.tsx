@@ -58,7 +58,7 @@ function App() {
   const selectedBrands = query.get('brand');
   const selectedSize = query.get('size');
   const selectedGenders = query.get('gender');
-  const sortActiveLink = 'text-blue-700 underline underline-offset-4';
+  const sortActiveLink = 'text-blue-500 underline underline-offset-4';
 
   const filteredProducts = () => {
     return products
@@ -88,14 +88,18 @@ function App() {
         <div className="flex text-sm gap-2 lg:col-span-3">
           <p className="inline font-semibold">Sort By:</p>
           <Link
-            className={sortOrder === 'asc' ? sortActiveLink : ''}
+            className={
+              sortOrder === 'asc' ? sortActiveLink : 'hover:text-blue-500'
+            }
             to={createLink({ type: 'SORT', param: 'asc' })}
           >
             Price - Low to High
           </Link>
           <Link
             to={createLink({ type: 'SORT', param: 'desc' })}
-            className={sortOrder === 'desc' ? sortActiveLink : ''}
+            className={
+              sortOrder === 'desc' ? sortActiveLink : 'hover:text-blue-500'
+            }
           >
             Price - High to Low
           </Link>
