@@ -2,30 +2,31 @@ import { useState } from 'react';
 import { Product } from './Product';
 import { products } from './products';
 import { capitalizedWord } from './utils/capitalized';
-import { classNames } from './utils/classNames';
 import { useQuery } from './utils/useQuery';
 import { Link, useNavigate } from 'react-router-dom';
+import { MinusIcon, PlusIcon } from '@heroicons/react/20/solid';
 
 function createLink({
-  sort,
-  brand,
-  size,
-  gender,
+  type,
+  param,
 }: {
-  sort?: string;
-  brand?: string;
-  size?: string;
-  gender?: string;
+  type: 'SORT' | 'BRAND' | 'SIZE' | 'GENDER';
+  param: string;
 }) {
   const queryString = window.location.search;
   const urlParams = new URLSearchParams(queryString);
-  if (sort) urlParams.set('sort', sort);
-  if (brand) {
-    urlParams.set('brand', brand);
-    console.log(urlParams.toString());
+  if (type === 'SORT') {
+    param ? urlParams.set('sort', param) : urlParams.delete('sort');
   }
-  if (size) urlParams.set('size', size);
-  if (gender) urlParams.set('gender', gender);
+  if (type === 'BRAND') {
+    param ? urlParams.set('brand', param) : urlParams.delete('brand');
+  }
+  if (type === 'SIZE') {
+    param ? urlParams.set('size', param) : urlParams.delete('size');
+  }
+  if (type === 'GENDER') {
+    param ? urlParams.set('gender', param) : urlParams.delete('gender');
+  }
   const newUrl = '?' + urlParams.toString();
   return newUrl;
 }
@@ -54,34 +55,41 @@ function App() {
   const selectedGenders = query.get('gender');
 
   return (
-    <div>
-      <FilterSidebar
-        selectedBrands={selectedBrands}
-        selectedSizes={selectedSize}
-        selectedGenders={selectedGenders}
-      />
-      <div>
-        <h1 className="text-2xl leading-tight font-medium mb-2">Products</h1>
-        <div className="flex text-sm gap-2 mb-2">
-          <p className="inline font-semibold">Sort By</p>
+    <div className="bg-white container my-0 mx-auto px-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 border-b border-gray-200 pt-12 pb-6 items-end">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+          Products
+        </h1>
+        <div className="flex text-sm gap-2 lg:col-span-3">
+          <p className="inline font-semibold">Sort By:</p>
           <Link
             className={sortOrder === 'asc' ? sortActiveLink : ''}
-            to={createLink({ sort: 'asc' })}
+            to={createLink({ type: 'SORT', param: 'asc' })}
           >
             Price - Low to High
           </Link>
           <Link
-            to={createLink({ sort: 'desc' })}
+            to={createLink({ type: 'SORT', param: 'desc' })}
             className={sortOrder === 'desc' ? sortActiveLink : ''}
           >
             Price - High to Low
           </Link>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-x-3 gap-y-6">
-        {sortedProducts(sortOrder).map((product) => (
-          <Product key={product.productName} product={product} />
-        ))}
+      <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
+        <FilterSidebar
+          selectedBrands={selectedBrands}
+          selectedSizes={selectedSize}
+          selectedGenders={selectedGenders}
+        />
+        <div className="lg:col-span-3">
+          <div></div>
+          <div className="grid grid-cols-3 gap-x-3 gap-y-6">
+            {sortedProducts(sortOrder).map((product) => (
+              <Product key={product.productName} product={product} />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -140,67 +148,60 @@ function FilterItem({
     const lowercasedName = name.toLowerCase();
     let link: string | null = null;
     if (lowercasedName === 'brand') {
-      link = createLink({ brand: newSelectedOptions.join(':') });
+      link = createLink({ type: 'BRAND', param: newSelectedOptions.join(':') });
     }
     if (lowercasedName === 'size') {
-      link = createLink({ size: newSelectedOptions.join(':') });
+      link = createLink({ type: 'SIZE', param: newSelectedOptions.join(':') });
     }
     if (lowercasedName === 'gender') {
-      link = createLink({ gender: newSelectedOptions.join(':') });
+      link = createLink({
+        type: 'GENDER',
+        param: newSelectedOptions.join(':'),
+      });
     }
     // open the link
     link && navigate(link);
   }
 
   function isChecked(option: string): boolean {
-    console.log('option', option);
-    console.log(
-      selectedOptions.some(
-        (selectedOption) =>
-          selectedOption.toLowerCase() === option.toLowerCase()
-      )
-    );
     return selectedOptions.some(
       (selectedOption) => selectedOption.toLowerCase() === option.toLowerCase()
     );
   }
 
   return (
-    <div>
+    <div className="border-b border-gray-200 py-6">
       <button
-        className="flex gap-2 items-center justify-between"
+        className="flex w-full items-center justify-between bg-white py-3 text-sm text-gray-400 hover:text-gray-500"
         onClick={() => setOpen(!open)}
       >
-        <h3>{name}</h3>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          className={classNames('h-5 w-5', open ? 'rotate-180' : '')}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75"
-          />
-        </svg>
+        <span className="font-medium text-gray-900">{name}</span>
+        {open ? (
+          <MinusIcon className="h-5 w-5" aria-hidden="true" />
+        ) : (
+          <PlusIcon className="h-5 w-5" aria-hidden="true" />
+        )}
       </button>
       {open && (
         <div>
           {options.map((option) => (
-            <label key={option} className="flex items-center mb-1 font-medium">
+            <div key={option} className="flex items-center">
               <input
-                className="mr-2 leading-tight"
+                id={`filter-${option}`}
+                className="mr-1 leading-tight h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 type="checkbox"
                 checked={isChecked(option)}
                 onChange={(e) =>
                   selectOrUnselectOption(option, e.target.checked)
                 }
               />
-              <span className="text-sm">{capitalizedWord(option)}</span>
-            </label>
+              <label
+                className="ml-1 text-sm text-gray-600"
+                htmlFor={`filter-${option}`}
+              >
+                {capitalizedWord(option)}
+              </label>
+            </div>
           ))}
         </div>
       )}
