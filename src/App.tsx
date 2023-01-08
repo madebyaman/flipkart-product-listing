@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Product } from './Product';
-import { products } from './products';
+import { Product as ProductType, products } from './products';
 import { capitalizedWord } from './utils/capitalized';
 import { useQuery } from './utils/useQuery';
 import { Link, useNavigate } from 'react-router-dom';
@@ -81,6 +81,7 @@ function App() {
           selectedBrands={selectedBrands}
           selectedSizes={selectedSize}
           selectedGenders={selectedGenders}
+          products={products}
         />
         <div className="lg:col-span-3">
           <div></div>
@@ -99,17 +100,48 @@ function FilterSidebar({
   selectedBrands,
   selectedSizes,
   selectedGenders,
+  products,
 }: {
   selectedBrands: string | null;
   selectedSizes: string | null;
   selectedGenders: string | null;
+  products: ProductType[];
 }) {
+  function reduceProductsToGenders(cur: string[], next: ProductType) {
+    if (cur.length === 0) return [next.gender];
+    if (cur.includes(next.gender)) return cur;
+    else return [...cur, next.gender];
+  }
+  const genderOptions = products.reduce(reduceProductsToGenders, []);
+  function reduceProductsToBrands(cur: string[], next: ProductType) {
+    if (cur.length === 0) return [next.brand];
+    if (cur.includes(next.brand)) return cur;
+    else return [...cur, next.brand];
+  }
+  const brandOptions = products.reduce(reduceProductsToBrands, []);
+  function reduceProductsToSizes(cur: string[], next: ProductType): string[] {
+    if (cur.length === 0) return [...next.sizes.map((size) => size)];
+    let newCurrent = cur;
+    next.sizes.forEach((size) => {
+      if (cur.includes(size)) {
+        return;
+      } else newCurrent = [...cur, size];
+    });
+    return newCurrent;
+  }
+  const sizeOptions = products.reduce(reduceProductsToSizes, []);
   return (
     <div>
       <FilterItem
         name="Gender"
-        options={['male', 'female']}
+        options={genderOptions}
         selected={selectedGenders}
+      />
+      <FilterItem name="Size" options={sizeOptions} selected={selectedSizes} />
+      <FilterItem
+        name="Brand"
+        options={brandOptions}
+        selected={selectedBrands}
       />
     </div>
   );
@@ -124,7 +156,7 @@ function FilterItem({
   options: string[];
   selected: string | null;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   // From selected, gather which all options are checked
   let selectedOptions: string[] = [];
