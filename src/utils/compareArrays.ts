@@ -5,5 +5,7 @@
  * @returns boolean
  */
 export function compareTwoArrays(array1: string[], array2: string[]): boolean {
-  return array1.every((item) => array2.includes(item));
+  return array1.every((item) =>
+    array2.some((array2Item) => array2Item.toLowerCase() === item.toLowerCase())
+  );
 }
