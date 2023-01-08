@@ -1,4 +1,4 @@
-import { Product as ProductType } from './products';
+import { Product as ProductType } from '../products';
 
 export function Product({ product }: { product: ProductType }) {
   const { productName, img, sizes, brand, price } = product;

@@ -1,51 +1,26 @@
-import { MouseEvent, ReactNode } from 'react';
+import { XMarkIcon } from '@heroicons/react/20/solid';
+import { MouseEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Product as ProductType } from '../products';
 import { capitalizedWord } from '../utils/capitalized';
-import { FilterItem } from './FilterItem';
-import { XMarkIcon, BackspaceIcon } from '@heroicons/react/20/solid';
-import { useNavigate } from 'react-router-dom';
+import { getBrands } from '../utils/getBrands';
+import { getGenderOptions } from '../utils/getGenderOptions';
+import { getSizes } from '../utils/getSizes';
 import { removedFilterLink } from '../utils/removedFilterLink';
+import { useFilter } from '../utils/useFilter';
+import { FilterItem } from './FilterItem';
 
-export function FilterSidebar({
-  selectedBrands,
-  selectedSizes,
-  selectedGenders,
-  products,
-}: {
-  selectedBrands: string | null;
-  selectedSizes: string | null;
-  selectedGenders: string | null;
-  products: ProductType[];
-}) {
+export function FilterSidebar({ products }: { products: ProductType[] }) {
   const navigate = useNavigate();
-  function reduceProductsToGenders(cur: string[], next: ProductType) {
-    if (cur.length === 0) return [next.gender];
-    if (cur.includes(next.gender)) return cur;
-    else return [...cur, next.gender];
-  }
-  const genderOptions = products.reduce(reduceProductsToGenders, []);
-  function reduceProductsToBrands(cur: string[], next: ProductType) {
-    if (cur.length === 0) return [next.brand];
-    if (cur.includes(next.brand)) return cur;
-    else return [...cur, next.brand];
-  }
-  const brandOptions = products.reduce(reduceProductsToBrands, []);
-  function reduceProductsToSizes(cur: string[], next: ProductType): string[] {
-    if (cur.length === 0) return [...next.sizes.map((size) => size)];
-    let newCurrent = cur;
-    next.sizes.forEach((size) => {
-      if (cur.includes(size)) {
-        return;
-      } else newCurrent = [...cur, size];
-    });
-    return newCurrent;
-  }
-  const sizeOptions = products.reduce(reduceProductsToSizes, []);
+  const { brands, sizes, genders } = useFilter();
+  const genderOptions = getGenderOptions(products);
+  const brandOptions = getBrands(products);
+  const sizeOptions = getSizes(products);
   return (
     <div>
       <div className="flex items-center justify-between">
         <h2>Filters</h2>
-        {(selectedBrands || selectedGenders || selectedSizes) && (
+        {(brands || genders || sizes) && (
           <button
             className="flex uppercase items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-700"
             onClick={() => navigate('/')}
@@ -55,36 +30,22 @@ export function FilterSidebar({
         )}
       </div>
       <div className="flex gap-2 mt-2 flex-wrap">
-        {selectedBrands &&
-          selectedBrands
-            .split(':')
-            .map((brand) => (
-              <FilterRemoveButton key={`brand-${brand}`} filter={brand} />
-            ))}
-        {selectedSizes &&
-          selectedSizes
-            .split(':')
-            .map((size) => (
-              <FilterRemoveButton key={`size-${size}`} filter={size} />
-            ))}
-        {selectedGenders &&
-          selectedGenders
-            .split(':')
-            .map((gender) => (
-              <FilterRemoveButton key={`gender-${gender}`} filter={gender} />
-            ))}
+        {brands &&
+          brands.map((brand) => (
+            <FilterRemoveButton key={`brand-${brand}`} filter={brand} />
+          ))}
+        {sizes &&
+          sizes.map((size) => (
+            <FilterRemoveButton key={`size-${size}`} filter={size} />
+          ))}
+        {genders &&
+          genders.map((gender) => (
+            <FilterRemoveButton key={`gender-${gender}`} filter={gender} />
+          ))}
       </div>
-      <FilterItem
-        name="Gender"
-        options={genderOptions}
-        selected={selectedGenders}
-      />
-      <FilterItem name="Size" options={sizeOptions} selected={selectedSizes} />
-      <FilterItem
-        name="Brand"
-        options={brandOptions}
-        selected={selectedBrands}
-      />
+      <FilterItem name="Gender" options={genderOptions} selected={genders} />
+      <FilterItem name="Size" options={sizeOptions} selected={sizes} />
+      <FilterItem name="Brand" options={brandOptions} selected={brands} />
     </div>
   );
 }

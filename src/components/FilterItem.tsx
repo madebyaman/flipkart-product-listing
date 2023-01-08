@@ -11,27 +11,25 @@ export function FilterItem({
 }: {
   name: string;
   options: string[];
-  selected: string | null;
+  selected: string[] | undefined;
 }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   // From selected, gather which all options are checked
-  let selectedOptions: string[] = [];
-  if (selected) {
-    selectedOptions = selected.split(':');
-  }
-
   function selectOrUnselectOption(option: string, checked: boolean) {
     let newSelectedOptions: string[] = [];
     if (!checked) {
       // remove option
-      newSelectedOptions = selectedOptions.filter(
-        (givenOption) => givenOption.toLowerCase() !== option.toLowerCase()
-      );
+      newSelectedOptions =
+        selected?.filter(
+          (givenOption) => givenOption.toLowerCase() !== option.toLowerCase()
+        ) || [];
     }
     if (checked) {
       // add option
-      newSelectedOptions = [...selectedOptions, option.toLowerCase()];
+      newSelectedOptions = selected
+        ? [...selected, option.toLowerCase()]
+        : [option.toLowerCase()];
     }
     // generate link
     const lowercasedName = name.toLowerCase();
@@ -53,9 +51,12 @@ export function FilterItem({
   }
 
   function isChecked(option: string): boolean {
-    return selectedOptions.some(
-      (selectedOption) => selectedOption.toLowerCase() === option.toLowerCase()
-    );
+    if (selected)
+      return selected.some(
+        (selectedOption) =>
+          selectedOption.toLowerCase() === option.toLowerCase()
+      );
+    else return false;
   }
 
   return (

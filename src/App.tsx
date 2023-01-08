@@ -1,15 +1,19 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { FilterSidebar } from './components/FilterSidebar';
-import { Product } from './Product';
+import { Product } from './components/Product';
 import { Product as ProductType, products } from './products';
+import { compareTwoArrays } from './utils/compareArrays';
 import { createLink } from './utils/createLink';
-import { useQuery } from './utils/useQuery';
+import { getBrands } from './utils/getBrands';
+import { getGenderOptions } from './utils/getGenderOptions';
+import { getSizes } from './utils/getSizes';
+import { useFilter } from './utils/useFilter';
 
 function filteredProductBySizes(
   product: ProductType,
-  selectedSizes: string | null
+  sizes: string[] | undefined
 ): ProductType | undefined {
-  const sizes = selectedSizes?.split(':');
   if (sizes) {
     if (
       sizes.some((size) =>
@@ -27,9 +31,8 @@ function filteredProductBySizes(
 
 function filterProductByGender(
   product: ProductType,
-  selectedGenders: string | null
+  genders: string[] | undefined
 ): ProductType | undefined {
-  const genders = selectedGenders?.split(':');
   if (genders) {
     if (genders.some((gender) => product.gender.toLowerCase() === gender))
       return product;
@@ -40,9 +43,8 @@ function filterProductByGender(
 }
 function filteredProductByBrands(
   product: ProductType,
-  selectedBrands: string | null
+  brands: string[] | undefined
 ): ProductType | undefined {
-  const brands = selectedBrands?.split(':');
   if (brands) {
     if (brands.some((brand) => product.brand.toLowerCase() === brand))
       return product;
@@ -53,18 +55,42 @@ function filteredProductByBrands(
 }
 
 function App() {
-  const query = useQuery();
-  const sortOrder = query.get('sort') || 'asc';
-  const selectedBrands = query.get('brand');
-  const selectedSize = query.get('size');
-  const selectedGenders = query.get('gender');
+  const { sortOrder, genders, brands, sizes } = useFilter();
+  const navigate = useNavigate();
   const sortActiveLink = 'text-blue-500 underline underline-offset-4';
+
+  // Guard against incorrect filters
+  useEffect(() => {
+    let mounted: boolean = true;
+    if (sortOrder !== 'asc' && sortOrder !== 'desc') {
+      const newLink = createLink({ type: 'SORT', param: '' });
+      mounted && navigate(newLink);
+    }
+    const genderOptions = getGenderOptions(products);
+    if (genders && !compareTwoArrays(genders, genderOptions)) {
+      const newLink = createLink({ type: 'GENDER', param: '' });
+      mounted && navigate(newLink);
+    }
+    const sizeOptions = getSizes(products);
+    if (sizes && !compareTwoArrays(sizes, sizeOptions)) {
+      const newLink = createLink({ type: 'SIZE', param: '' });
+      mounted && navigate(newLink);
+    }
+    const brandOptions = getBrands(products);
+    if (brands && !compareTwoArrays(brands, brandOptions)) {
+      const newLink = createLink({ type: 'BRAND', param: '' });
+      mounted && navigate(newLink);
+    }
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filteredProducts = () => {
     return products
-      .filter((product) => filterProductByGender(product, selectedGenders))
-      .filter((product) => filteredProductByBrands(product, selectedBrands))
-      .filter((product) => filteredProductBySizes(product, selectedSize));
+      .filter((product) => filterProductByGender(product, genders))
+      .filter((product) => filteredProductByBrands(product, brands))
+      .filter((product) => filteredProductBySizes(product, sizes));
   };
 
   function sortedProducts(a: ProductType, b: ProductType) {
@@ -106,12 +132,7 @@ function App() {
         </div>
       </div>
       <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
-        <FilterSidebar
-          selectedBrands={selectedBrands}
-          selectedSizes={selectedSize}
-          selectedGenders={selectedGenders}
-          products={products}
-        />
+        <FilterSidebar products={products} />
         <div className="lg:col-span-3">
           <div></div>
           <div className="grid grid-cols-3 gap-x-3 gap-y-6">
