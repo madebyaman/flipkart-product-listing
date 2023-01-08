@@ -1,37 +1,9 @@
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { FilterSidebar } from './components/FilterSidebar';
 import { Product } from './Product';
 import { Product as ProductType, products } from './products';
-import { capitalizedWord } from './utils/capitalized';
+import { createLink } from './utils/createLink';
 import { useQuery } from './utils/useQuery';
-import { Link, useNavigate } from 'react-router-dom';
-import { MinusIcon, PlusIcon } from '@heroicons/react/20/solid';
-
-function createLink({
-  type,
-  param,
-}: {
-  type: 'SORT' | 'BRAND' | 'SIZE' | 'GENDER';
-  param: string;
-}) {
-  const queryString = window.location.search;
-  const urlParams = new URLSearchParams(queryString);
-  if (type === 'SORT') {
-    param ? urlParams.set('sort', param) : urlParams.delete('sort');
-  }
-  if (type === 'BRAND') {
-    param ? urlParams.set('brand', param) : urlParams.delete('brand');
-  }
-  if (type === 'SIZE') {
-    param ? urlParams.set('size', param) : urlParams.delete('size');
-  }
-  if (type === 'GENDER') {
-    param ? urlParams.set('gender', param) : urlParams.delete('gender');
-  }
-  const newUrl = '?' + urlParams.toString();
-  return newUrl;
-}
-
-const sortActiveLink = 'text-blue-700 underline underline-offset-4';
 
 function filteredProductBySizes(
   product: ProductType,
@@ -86,6 +58,7 @@ function App() {
   const selectedBrands = query.get('brand');
   const selectedSize = query.get('size');
   const selectedGenders = query.get('gender');
+  const sortActiveLink = 'text-blue-700 underline underline-offset-4';
 
   const filteredProducts = () => {
     return products
@@ -93,6 +66,7 @@ function App() {
       .filter((product) => filteredProductByBrands(product, selectedBrands))
       .filter((product) => filteredProductBySizes(product, selectedSize));
   };
+
   function sortedProducts(a: ProductType, b: ProductType) {
     if (a.price > b.price) {
       if (sortOrder === 'asc') return 1;
@@ -145,151 +119,6 @@ function App() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function FilterSidebar({
-  selectedBrands,
-  selectedSizes,
-  selectedGenders,
-  products,
-}: {
-  selectedBrands: string | null;
-  selectedSizes: string | null;
-  selectedGenders: string | null;
-  products: ProductType[];
-}) {
-  function reduceProductsToGenders(cur: string[], next: ProductType) {
-    if (cur.length === 0) return [next.gender];
-    if (cur.includes(next.gender)) return cur;
-    else return [...cur, next.gender];
-  }
-  const genderOptions = products.reduce(reduceProductsToGenders, []);
-  function reduceProductsToBrands(cur: string[], next: ProductType) {
-    if (cur.length === 0) return [next.brand];
-    if (cur.includes(next.brand)) return cur;
-    else return [...cur, next.brand];
-  }
-  const brandOptions = products.reduce(reduceProductsToBrands, []);
-  function reduceProductsToSizes(cur: string[], next: ProductType): string[] {
-    if (cur.length === 0) return [...next.sizes.map((size) => size)];
-    let newCurrent = cur;
-    next.sizes.forEach((size) => {
-      if (cur.includes(size)) {
-        return;
-      } else newCurrent = [...cur, size];
-    });
-    return newCurrent;
-  }
-  const sizeOptions = products.reduce(reduceProductsToSizes, []);
-  return (
-    <div>
-      <FilterItem
-        name="Gender"
-        options={genderOptions}
-        selected={selectedGenders}
-      />
-      <FilterItem name="Size" options={sizeOptions} selected={selectedSizes} />
-      <FilterItem
-        name="Brand"
-        options={brandOptions}
-        selected={selectedBrands}
-      />
-    </div>
-  );
-}
-
-function FilterItem({
-  name,
-  options,
-  selected,
-}: {
-  name: string;
-  options: string[];
-  selected: string | null;
-}) {
-  const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
-  // From selected, gather which all options are checked
-  let selectedOptions: string[] = [];
-  if (selected) {
-    selectedOptions = selected.split(':');
-  }
-
-  function selectOrUnselectOption(option: string, checked: boolean) {
-    let newSelectedOptions: string[] = [];
-    if (!checked) {
-      // remove option
-      newSelectedOptions = selectedOptions.filter(
-        (givenOption) => givenOption.toLowerCase() !== option.toLowerCase()
-      );
-    }
-    if (checked) {
-      // add option
-      newSelectedOptions = [...selectedOptions, option.toLowerCase()];
-    }
-    // generate link
-    const lowercasedName = name.toLowerCase();
-    let link: string | null = null;
-    if (lowercasedName === 'brand') {
-      link = createLink({ type: 'BRAND', param: newSelectedOptions.join(':') });
-    }
-    if (lowercasedName === 'size') {
-      link = createLink({ type: 'SIZE', param: newSelectedOptions.join(':') });
-    }
-    if (lowercasedName === 'gender') {
-      link = createLink({
-        type: 'GENDER',
-        param: newSelectedOptions.join(':'),
-      });
-    }
-    // open the link
-    link && navigate(link);
-  }
-
-  function isChecked(option: string): boolean {
-    return selectedOptions.some(
-      (selectedOption) => selectedOption.toLowerCase() === option.toLowerCase()
-    );
-  }
-
-  return (
-    <div className="border-b border-gray-200 py-6">
-      <button
-        className="flex w-full items-center justify-between bg-white py-3 text-sm text-gray-400 hover:text-gray-500"
-        onClick={() => setOpen(!open)}
-      >
-        <span className="font-medium text-gray-900">{name}</span>
-        {open ? (
-          <MinusIcon className="h-5 w-5" aria-hidden="true" />
-        ) : (
-          <PlusIcon className="h-5 w-5" aria-hidden="true" />
-        )}
-      </button>
-      {open && (
-        <div>
-          {options.map((option) => (
-            <div key={option} className="flex items-center">
-              <input
-                id={`filter-${option}`}
-                className="mr-1 leading-tight h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                type="checkbox"
-                checked={isChecked(option)}
-                onChange={(e) =>
-                  selectOrUnselectOption(option, e.target.checked)
-                }
-              />
-              <label
-                className="ml-1 text-sm text-gray-600"
-                htmlFor={`filter-${option}`}
-              >
-                {capitalizedWord(option)}
-              </label>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
