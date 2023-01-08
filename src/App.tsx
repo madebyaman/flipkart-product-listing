@@ -33,18 +33,51 @@ function createLink({
 
 const sortActiveLink = 'text-blue-700 underline underline-offset-4';
 
-function sortedProducts(sort: string) {
-  return products.sort((a, b) => {
-    if (a.price > b.price) {
-      if (sort === 'asc') return 1;
-      if (sort === 'desc') return -1;
-    }
-    if (a.price < b.price) {
-      if (sort === 'asc') return -1;
-      if (sort === 'desc') return 1;
-    }
-    return 0;
-  });
+function filteredProductBySizes(
+  product: ProductType,
+  selectedSizes: string | null
+): ProductType | undefined {
+  const sizes = selectedSizes?.split(':');
+  if (sizes) {
+    if (
+      sizes.some((size) =>
+        product.sizes.some(
+          (productSize) => productSize.toLowerCase() === size.toLowerCase()
+        )
+      )
+    )
+      return product;
+    else return;
+  } else {
+    return product;
+  }
+}
+
+function filterProductByGender(
+  product: ProductType,
+  selectedGenders: string | null
+): ProductType | undefined {
+  const genders = selectedGenders?.split(':');
+  if (genders) {
+    if (genders.some((gender) => product.gender.toLowerCase() === gender))
+      return product;
+    else return;
+  } else {
+    return product;
+  }
+}
+function filteredProductByBrands(
+  product: ProductType,
+  selectedBrands: string | null
+): ProductType | undefined {
+  const brands = selectedBrands?.split(':');
+  if (brands) {
+    if (brands.some((brand) => product.brand.toLowerCase() === brand))
+      return product;
+    else return;
+  } else {
+    return product;
+  }
 }
 
 function App() {
@@ -53,6 +86,24 @@ function App() {
   const selectedBrands = query.get('brand');
   const selectedSize = query.get('size');
   const selectedGenders = query.get('gender');
+
+  const filteredProducts = () => {
+    return products
+      .filter((product) => filterProductByGender(product, selectedGenders))
+      .filter((product) => filteredProductByBrands(product, selectedBrands))
+      .filter((product) => filteredProductBySizes(product, selectedSize));
+  };
+  function sortedProducts(a: ProductType, b: ProductType) {
+    if (a.price > b.price) {
+      if (sortOrder === 'asc') return 1;
+      if (sortOrder === 'desc') return -1;
+    }
+    if (a.price < b.price) {
+      if (sortOrder === 'asc') return -1;
+      if (sortOrder === 'desc') return 1;
+    }
+    return 0;
+  }
 
   return (
     <div className="bg-white container my-0 mx-auto px-4">
@@ -86,9 +137,11 @@ function App() {
         <div className="lg:col-span-3">
           <div></div>
           <div className="grid grid-cols-3 gap-x-3 gap-y-6">
-            {sortedProducts(sortOrder).map((product) => (
-              <Product key={product.productName} product={product} />
-            ))}
+            {filteredProducts()
+              .sort(sortedProducts)
+              .map((product) => (
+                <Product key={product.productName} product={product} />
+              ))}
           </div>
         </div>
       </div>
