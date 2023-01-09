@@ -1,3 +1,7 @@
+/**
+ * Creates a link with search params from given parameters
+ * @returns New link
+ */
 export function createLink({
   type,
   param,

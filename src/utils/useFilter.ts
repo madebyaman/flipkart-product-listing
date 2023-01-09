@@ -1,7 +1,7 @@
 import { useQuery } from './useQuery';
 
 /**
- * Gives back the filters
+ * Custom hook: Parses the url and gives back the filters
  */
 export function useFilter() {
   const query = useQuery();
